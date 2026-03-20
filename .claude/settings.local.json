@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(./hvigorw.bat build:*)"
+      "Bash(./hvigorw.bat build:*)",
+      "WebSearch",
+      "WebFetch(domain:developer.huawei.com)"
     ]
   }
 }

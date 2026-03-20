@@ -3,6 +3,7 @@
     "pages/Index",
     "pages/HomePage",
     "pages/CreateMemoryPage",
-    "pages/MemoryDetailPage"
+    "pages/MemoryDetailPage",
+    "pages/EditMemoryPage"
   ]
 }

@@ -13,6 +13,19 @@ struct MemoryDetailPage {
   @State showImageViewer: boolean = false;
   @State isDeleting: boolean = false;
 
+  // 判断是否是视频
+  isVideo(uri: string): boolean {
+    const videoExtensions = ['.mp4', '.mov', '.avi', '.mkv', '.webm', '.3gp', '.m4v'];
+    const lowerUri = uri.toLowerCase();
+    return videoExtensions.some(ext => lowerUri.endsWith(ext));
+  }
+
+  // 打开图片预览
+  openImageViewer(index: number): void {
+    this.currentImageIndex = index;
+    this.showImageViewer = true;
+  }
+
   async aboutToAppear() {
     const params = router.getParams() as Record<string, string>;
     const memoryId = params?.memoryId;
@@ -74,39 +87,113 @@ struct MemoryDetailPage {
 
           Blank()
 
+          // 编辑按钮
+          Text('编辑')
+            .fontSize(16)
+            .fontColor('rgba(255, 255, 255, 0.8)')
+            .margin({ right: 16 })
+            .onClick((): void => {
+              if (this.memory) {
+                router.pushUrl({
+                  url: 'pages/EditMemoryPage',
+                  params: { memoryId: this.memory.id }
+                });
+              }
+            })
+
           Text(this.isDeleting ? '删除中...' : '删除')
             .fontSize(16)
             .fontColor('#FF6B6B')
             .onClick((): void => {
               if (!this.isDeleting) {
-                this.deleteMemory();
+                // 显示确认弹窗
+                AlertDialog.show({
+                  title: '确认删除',
+                  message: '确定要删除这条回忆吗？删除后无法恢复。',
+                  primaryButton: {
+                    value: '取消',
+                    action: (): void => {
+                      // 取消删除
+                    }
+                  },
+                  secondaryButton: {
+                    value: '删除',
+                    action: (): void => {
+                      this.deleteMemory();
+                    },
+                    fontColor: '#FF6B6B'
+                  }
+                });
               }
             })
         }
         .width('100%')
-        .padding({ left: 16, right: 16, top: 50, bottom: 16 })
+        .padding({ left: 16, right: 16, top: 20, bottom: 16 })
         .justifyContent(FlexAlign.SpaceBetween)
 
         Scroll() {
           Column({ space: 20 }) {
             // 照片轮播/网格
             if (this.memory.mediaUris.length === 1) {
-              Image(this.memory.mediaUris[0])
-                .width('100%')
-                .height(300)
-                .borderRadius(16)
-                .objectFit(ImageFit.Cover)
+              Stack() {
+                if (this.isVideo(this.memory.mediaUris[0])) {
+                  Video({
+                    src: this.memory.mediaUris[0]
+                  })
+                    .width('100%')
+                    .height(300)
+                    .borderRadius(16)
+                    .objectFit(ImageFit.Cover)
+                    .autoPlay(true)
+                    .controls(true)
+                } else {
+                  Image(this.memory.mediaUris[0])
+                    .width('100%')
+                    .height(300)
+                    .borderRadius(16)
+                    .objectFit(ImageFit.Cover)
+                }
+              }
+              .width('100%')
+              .height(300)
+              .borderRadius(16)
+              .onClick((): void => {
+                if (this.memory && !this.isVideo(this.memory.mediaUris[0])) {
+                  this.openImageViewer(0);
+                }
+              })
             } else {
               // 多张照片网格展示
               Grid() {
                 ForEach(this.memory.mediaUris, (uri: string, index: number) => {
                   GridItem() {
-                    Image(uri)
-                      .width('100%')
-                      .height('100%')
-                      .borderRadius(8)
-                      .objectFit(ImageFit.Cover)
+                    Stack() {
+                      if (this.isVideo(uri)) {
+                        Video({
+                          src: uri
+                        })
+                          .width('100%')
+                          .height('100%')
+                          .borderRadius(8)
+                          .objectFit(ImageFit.Cover)
+                          .autoPlay(false)
+                          .controls(true)
+                      } else {
+                        Image(uri)
+                          .width('100%')
+                          .height('100%')
+                          .borderRadius(8)
+                          .objectFit(ImageFit.Cover)
+                      }
+                    }
+                    .width('100%')
+                    .height('100%')
                   }
+                  .onClick((): void => {
+                    if (!this.isVideo(uri)) {
+                      this.openImageViewer(index);
+                    }
+                  })
                 })
               }
               .columnsTemplate('1fr 1fr')
@@ -114,6 +201,66 @@ struct MemoryDetailPage {
               .rowsGap(8)
               .width('100%')
               .height(Math.ceil(this.memory.mediaUris.length / 2) * 180)
+            }
+
+            // 大图预览弹窗
+            if (this.showImageViewer && this.memory) {
+              Stack() {
+                // 背景
+                Column() {}
+                  .width('100%')
+                  .height('100%')
+                  .backgroundColor('rgba(0, 0, 0, 0.9)')
+                  .onClick((): void => {
+                    this.showImageViewer = false;
+                  })
+
+                // 照片轮播（只显示图片，过滤视频）
+                Swiper() {
+                  ForEach(this.memory.mediaUris.filter((uri: string) => !this.isVideo(uri)), (uri: string) => {
+                    Image(uri)
+                      .width('100%')
+                      .height('100%')
+                      .objectFit(ImageFit.Contain)
+                  })
+                }
+                .index(this.currentImageIndex)
+                .width('100%')
+                .height('100%')
+                .autoPlay(false)
+                .loop(false)
+                .indicator(false)
+                .onChange((index: number): void => {
+                  this.currentImageIndex = index;
+                })
+
+                // 关闭按钮
+                Column() {
+                  Text('×')
+                    .fontSize(28)
+                    .fontColor('#FFFFFF')
+                }
+                .width(44)
+                .height(44)
+                .backgroundColor('rgba(255, 255, 255, 0.2)')
+                .borderRadius(22)
+                .justifyContent(FlexAlign.Center)
+                .alignItems(HorizontalAlign.Center)
+                .position({ top: 60, right: 16 })
+                .onClick((): void => {
+                  this.showImageViewer = false;
+                })
+
+                // 页码指示
+                Row({ space: 8 }) {
+                  Text(`${this.currentImageIndex + 1} / ${this.memory.mediaUris.length}`)
+                    .fontSize(16)
+                    .fontColor('#FFFFFF')
+                }
+                .position({ bottom: 60 })
+              }
+              .width('100%')
+              .height('100%')
             }
 
             // 时间和地点
@@ -200,5 +347,6 @@ struct MemoryDetailPage {
     .width('100%')
     .height('100%')
     .backgroundColor('#1a1a2e')
+    .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
   }
 }

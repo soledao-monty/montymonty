@@ -12,6 +12,13 @@ export struct MediaGrid {
   onItemClick?: (index: number) => void;
   onItemRemove?: (index: number) => void;
 
+  // 判断是否是视频
+  isVideo(uri: string): boolean {
+    const videoExtensions = ['.mp4', '.mov', '.avi', '.mkv', '.webm', '.3gp', '.m4v'];
+    const lowerUri = uri.toLowerCase();
+    return videoExtensions.some(ext => lowerUri.endsWith(ext));
+  }
+
   build() {
     Grid() {
       // 添加按钮
@@ -40,11 +47,26 @@ export struct MediaGrid {
       ForEach(this.mediaItems, (uri: string, index: number) => {
         GridItem() {
           Stack() {
-            Image(uri)
-              .width('100%')
-              .height('100%')
-              .borderRadius(8)
-              .objectFit(ImageFit.Cover)
+            if (this.isVideo(uri)) {
+              // 视频使用 Video 组件
+              Video({
+                src: uri
+              })
+                .width('100%')
+                .height('100%')
+                .borderRadius(8)
+                .objectFit(ImageFit.Cover)
+                .autoPlay(false)
+                .controls(false)
+                .muted(true)
+            } else {
+              // 图片使用 Image 组件
+              Image(uri)
+                .width('100%')
+                .height('100%')
+                .borderRadius(8)
+                .objectFit(ImageFit.Cover)
+            }
 
             // 移除按钮
             if (this.onItemRemove) {
@@ -53,31 +75,36 @@ export struct MediaGrid {
                   .fontSize(20)
                   .fontColor('#FFFFFF')
               }
-              .width(24)
-              .height(24)
-              .backgroundColor('rgba(0, 0, 0, 0.5)')
-              .borderRadius(12)
+              .width(32)
+              .height(32)
+              .backgroundColor('rgba(0, 0, 0, 0.6)')
+              .borderRadius(16)
               .justifyContent(FlexAlign.Center)
               .alignItems(HorizontalAlign.Center)
-              .position({ x: '85%', y: '5%' })
+              .position({ x: '80%', y: '5%' })
+              .onClick((): void => {
+                if (this.onItemRemove) {
+                  this.onItemRemove(index);
+                }
+              })
             }
 
             // 视频标识
-            // if (isVideo) {
-            //   Column() {
-            //     Text('▶')
-            //       .fontSize(16)
-            //       .fontColor('#FFFFFF')
-            //   }
-            //   .width(32)
-            //   .height(32)
-            //   .backgroundColor('rgba(0, 0, 0, 0.5)')
-            //   .borderRadius(16)
-            //   .justifyContent(FlexAlign.Center)
-            //   .alignItems(HorizontalAlign.Center)
-            //   .position({ x: '50%', y: '50%' })
-            //   .translate({ x: '-50%', y: '-50%' })
-            // }
+            if (this.isVideo(uri)) {
+              Column() {
+                Text('▶')
+                  .fontSize(16)
+                  .fontColor('#FFFFFF')
+              }
+              .width(32)
+              .height(32)
+              .backgroundColor('rgba(0, 0, 0, 0.5)')
+              .borderRadius(16)
+              .justifyContent(FlexAlign.Center)
+              .alignItems(HorizontalAlign.Center)
+              .position({ x: '50%', y: '50%' })
+              .translate({ x: '-50%', y: '-50%' })
+            }
           }
           .width('100%')
           .height('100%')

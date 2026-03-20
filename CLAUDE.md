@@ -104,3 +104,124 @@ AppScope/
 - `app.json5`: 应用级配置（包名、版本、图标）
 - `build-profile.json5`: 构建配置，包含签名配置
 - `code-linter.json5`: 代码检查规则（针对 ETS 文件，排除 test/mock 目录）
+
+### TODO (V1.1 已完成)
+1. ✅ 创建回忆的时候，当前时间不允许修改 - 已添加 DatePicker 和 TimePicker
+2. ✅ 选择照片后删除按钮无法取消 - 已修复，增大点击区域
+3. ✅ 选择视频后预览黑色 - 已修复，使用 Video 组件显示视频
+4. ✅ 已保存的回忆支持编辑功能 - 已创建 EditMemoryPage，同步更新 PRD 为 V1.1
+5. ✅ 回忆列表地点左边加小图标 - 已添加 📍 图标
+6. ✅ 应用布局扩展到上下安全区 - 已使用 padding 和 layoutSafeArea 优化
+7. ✅ 查看回忆详情时大图预览 - 已实现 Swiper 左右滑动预览
+8. ✅ 删除回忆增加二次确认弹窗 - 已添加 AlertDialog
+
+## ArkTS/ArkUI 编码规范
+
+### 1. 组件属性必须使用链式调用
+ArkUI 组件的样式属性（如 `objectFit`、`borderRadius`、`width`、`height` 等）**必须在构造函数后使用链式方法调用**，不能在构造函数参数中传递。
+
+```typescript
+// ❌ 错误
+Video({
+  src: uri,
+  objectFit: ImageFit.Cover  // 构造函数中不能传 objectFit
+})
+
+// ✅ 正确
+Video({
+  src: uri
+})
+  .objectFit(ImageFit.Cover)
+  .width('100%')
+  .height(300)
+```
+
+### 2. 弹窗组件不能在条件渲染中使用
+`DatePickerDialog`、`TimePickerDialog` 等弹窗组件**不能**在 `@Component` 的 `build()` 方法中通过 `if` 条件渲染使用。必须在点击事件处理函数中直接调用 `.show()` 方法。
+
+```typescript
+// ❌ 错误
+if (this.showDatePicker) {
+  DatePickerDialog.show({ ... })
+}
+
+// ✅ 正确：点击时直接调用
+Text('修改').onClick(() => {
+  DatePickerDialog.show({ ... })
+})
+```
+
+### 3. 不使用事件冒泡阻止
+ArkUI 的 `ClickEvent` **没有** `stopPropagation()` 方法，不需要手动阻止事件冒泡。
+
+```typescript
+// ❌ 错误
+.onClick((event: ClickEvent) => {
+  event.stopPropagation(); // 不存在
+})
+
+// ✅ 正确：直接处理点击
+.onClick(() => {
+  this.onItemRemove(index);
+})
+```
+
+### 4. 严格进行空值检查
+使用 `@State` 声明的可为 null 的对象时，必须先进行空值检查再访问其属性。
+
+```typescript
+// ❌ 错误
+if (!this.isVideo(this.memory.mediaUris[0])) { // this.memory 可能为 null
+
+// ✅ 正确
+if (this.memory && !this.isVideo(this.memory.mediaUris[0])) {
+```
+
+### 5. 正确导入模块成员
+只导入实际使用的成员，部分成员可能不存在于模块中。
+
+```typescript
+// ❌ 错误
+import { router, promptAction, dialog } from '@kit.ArkUI'; // dialog 不存在
+
+// ✅ 正确
+import { router, promptAction } from '@kit.ArkUI';
+// AlertDialog 是内置组件，直接使用即可
+```
+
+### 6. 安全区扩展使用 expandSafeArea
+扩展安全区域应使用 `expandSafeArea()` 方法，而不是固定的 padding 或 `layoutSafeArea()`。
+
+```typescript
+// ❌ 错误：使用固定 padding
+Column().padding({ top: 48, bottom: 34 })
+
+// ❌ 错误：layoutSafeArea 不是所有组件都支持
+Stack().layoutSafeArea(true)
+
+// ✅ 正确：使用 expandSafeArea 扩展到系统安全区域
+Column()
+  .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
+```
+
+`SafeAreaType.SYSTEM` 表示系统安全区域，`SafeAreaEdge.TOP` 和 `SafeAreaEdge.BOTTOM` 分别表示顶部和底部。
+
+### 7. Video 组件特殊注意
+`Video` 组件的构造函数只接受 `src` 属性，样式属性必须通过链式调用设置。
+
+```typescript
+// ❌ 错误
+Video({
+  src: uri,
+  previewUri: uri,  // 不存在的属性
+  objectFit: ImageFit.Cover  // 构造函数中不能传
+})
+
+// ✅ 正确
+Video({
+  src: uri
+})
+  .objectFit(ImageFit.Cover)
+  .autoPlay(true)
+  .controls(true)
+```

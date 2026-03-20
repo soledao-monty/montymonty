@@ -38,11 +38,17 @@ export struct MemoryCardComponent {
           Text(' · ')
             .fontSize(12)
             .fontColor('rgba(255, 255, 255, 0.7)')
-          Text(this.memory.location)
-            .fontSize(12)
-            .fontColor('rgba(255, 255, 255, 0.7)')
-            .maxLines(1)
-            .textOverflow({ overflow: TextOverflow.Ellipsis })
+
+          // 地点图标
+          Row({ space: 3 }) {
+            Text('📍')
+              .fontSize(10)
+            Text(this.memory.location)
+              .fontSize(12)
+              .fontColor('rgba(255, 255, 255, 0.7)')
+              .maxLines(1)
+              .textOverflow({ overflow: TextOverflow.Ellipsis })
+          }
         }
       }
       .width('100%')

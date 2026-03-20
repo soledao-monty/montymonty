@@ -47,6 +47,7 @@ struct HomePage {
           ['#0f3460', 1]
         ]
       })
+      .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
 
       // 主内容
       Column() {
@@ -58,7 +59,7 @@ struct HomePage {
             .fontColor('#FFFFFF')
         }
         .width('100%')
-        .padding({ left: 20, right: 20, top: 50, bottom: 20 })
+        .padding({ left: 20, right: 20, top: 20, bottom: 20 })
         .justifyContent(FlexAlign.Start)
 
         // 回忆列表
@@ -133,7 +134,7 @@ struct HomePage {
       })
       .justifyContent(FlexAlign.Center)
       .alignItems(HorizontalAlign.Center)
-      .position({ bottom: 50 })
+      .position({ bottom: 36 })
       .onClick((): void => {
         router.pushUrl({
           url: 'pages/CreateMemoryPage'

@@ -14,8 +14,6 @@ struct CreateMemoryPage {
   @State location: string = '';
   @State mediaUris: string[] = [];
   @State isSaving: boolean = false;
-  @State showDatePicker: boolean = false;
-  @State showTimePicker: boolean = false;
 
   // 日期选择
   private selectedDate: Date = new Date();
@@ -81,6 +79,39 @@ struct CreateMemoryPage {
     return `${year}年${month}月${day}日 ${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
   }
 
+  openDatePicker() {
+    DatePickerDialog.show({
+      start: new Date('1900-1-1'),
+      end: new Date(),
+      selected: new Date(this.timestamp),
+      onAccept: (value) => {
+        const date = new Date(this.timestamp);
+        date.setFullYear(value.year, value.month, value.day);
+        this.timestamp = date.getTime();
+        // 日期选择后弹出时间选择
+        setTimeout(() => {
+          this.openTimePicker();
+        }, 300);
+      }
+    })
+  }
+
+  openTimePicker() {
+    TimePickerDialog.show({
+      start: new Date(0, 0, 0, 0, 0),
+      end: new Date(0, 0, 0, 23, 59),
+      selected: new Date(0, 0, 0, this.selectedHour, this.selectedMinute),
+      useMilitaryTime: false,
+      onAccept: (value) => {
+        const date = new Date(this.timestamp);
+        date.setHours(value.hour, value.minute);
+        this.timestamp = date.getTime();
+        this.selectedHour = value.hour;
+        this.selectedMinute = value.minute;
+      }
+    })
+  }
+
   build() {
     Column() {
       // 顶部导航
@@ -107,7 +138,7 @@ struct CreateMemoryPage {
           })
       }
       .width('100%')
-      .padding({ left: 16, right: 16, top: 50, bottom: 16 })
+      .padding({ left: 16, right: 16, top: 20, bottom: 16 })
       .justifyContent(FlexAlign.SpaceBetween)
 
       Scroll() {
@@ -170,7 +201,7 @@ struct CreateMemoryPage {
                   .fontSize(14)
                   .fontColor('rgba(255, 255, 255, 0.6)')
                   .onClick((): void => {
-                    this.showDatePicker = true;
+                    this.openDatePicker();
                   })
               }
               .width('100%')
@@ -263,7 +294,7 @@ struct CreateMemoryPage {
             .alignItems(HorizontalAlign.Start)
           }
         }
-        .padding({ left: 16, right: 16, bottom: 100 })
+        .padding({ left: 16, right: 16, bottom: 40 })
       }
       .width('100%')
       .height('100%')
@@ -272,5 +303,6 @@ struct CreateMemoryPage {
     .width('100%')
     .height('100%')
     .backgroundColor('#1a1a2e')
+    .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
   }
 }
