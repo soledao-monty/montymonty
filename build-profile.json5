@@ -1,0 +1,56 @@
+{
+  "app": {
+    "signingConfigs": [
+      {
+        "name": "default",
+        "type": "HarmonyOS",
+        "material": {
+          "certpath": "C:\\Users\\83711\\.ohos\\config\\default_montymonty_ZYrmQ2v3Q5o9UxIh3aUwdrRe-eVaw-CvxOOGNoknv60=.cer",
+          "keyAlias": "debugKey",
+          "keyPassword": "0000001BD2683D33830D643E7D98AB3E650DBF80DB569CDBC0B549487E999C05969142FACC5B94FDA0E1F6",
+          "profile": "C:\\Users\\83711\\.ohos\\config\\default_montymonty_ZYrmQ2v3Q5o9UxIh3aUwdrRe-eVaw-CvxOOGNoknv60=.p7b",
+          "signAlg": "SHA256withECDSA",
+          "storeFile": "C:\\Users\\83711\\.ohos\\config\\default_montymonty_ZYrmQ2v3Q5o9UxIh3aUwdrRe-eVaw-CvxOOGNoknv60=.p12",
+          "storePassword": "0000001BCE4C38B1D38E5D1CDCF5C9F26708EAD0F105B2252BD1DD997B7F79248C53283788341FB6F584E1"
+        }
+      }
+    ],
+    "products": [
+      {
+        "name": "default",
+        "signingConfig": "default",
+        "targetSdkVersion": "6.0.2(22)",
+        "compatibleSdkVersion": "6.0.2(22)",
+        "runtimeOS": "HarmonyOS",
+        "buildOption": {
+          "strictMode": {
+            "caseSensitiveCheck": true,
+            "useNormalizedOHMUrl": true
+          }
+        }
+      }
+    ],
+    "buildModeSet": [
+      {
+        "name": "debug",
+      },
+      {
+        "name": "release"
+      }
+    ]
+  },
+  "modules": [
+    {
+      "name": "entry",
+      "srcPath": "./entry",
+      "targets": [
+        {
+          "name": "default",
+          "applyToProducts": [
+            "default"
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "skills": {
+    "prd-writer": {
+      "source": "smithery.ai",
+      "sourceType": "well-known",
+      "computedHash": "3634cdd9e350a5c957341b832dc5cd73b14e8c3f3a17a3669e35449114fb1188"
+    }
+  }
+}

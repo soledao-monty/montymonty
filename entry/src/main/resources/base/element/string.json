@@ -1,0 +1,64 @@
+{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "module description"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "description"
+    },
+    {
+      "name": "EntryAbility_label",
+      "value": "label"
+    },
+    {
+      "name": "permission_read_media_reason",
+      "value": "需要访问媒体文件以选择照片和视频"
+    },
+    {
+      "name": "permission_location_reason",
+      "value": "需要获取位置信息以记录回忆发生的地点"
+    },
+    {
+      "name": "record_moment",
+      "value": "记录此刻"
+    },
+    {
+      "name": "app_name",
+      "value": "回忆流"
+    },
+    {
+      "name": "description_placeholder",
+      "value": "写下这一刻的感受..."
+    },
+    {
+      "name": "location_placeholder",
+      "value": "在哪里？"
+    },
+    {
+      "name": "select_photos",
+      "value": "选择照片"
+    },
+    {
+      "name": "save",
+      "value": "保存"
+    },
+    {
+      "name": "cancel",
+      "value": "取消"
+    },
+    {
+      "name": "delete",
+      "value": "删除"
+    },
+    {
+      "name": "no_memories",
+      "value": "还没有回忆，开始记录第一个吧"
+    },
+    {
+      "name": "photos_count",
+      "value": "%d 张照片"
+    }
+  ]
+}
