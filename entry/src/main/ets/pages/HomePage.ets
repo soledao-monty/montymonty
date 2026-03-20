@@ -127,8 +127,8 @@ struct HomePage {
             .fontColor('#FFFFFF')
         }
       }
-      .width(180)
-      .height(56)
+      .width(160)
+      .height(48)
       .backgroundColor('rgba(255, 255, 255, 0.25)')
       .backdropBlur(20)
       .borderRadius(28)
@@ -138,7 +138,7 @@ struct HomePage {
       })
       .justifyContent(FlexAlign.Center)
       .alignItems(HorizontalAlign.Center)
-      .position({ bottom: 36 })
+      .position({ right: 32, bottom: 48 })
       .onClick((): void => {
         router.pushUrl({
           url: 'pages/CreateMemoryPage'
