@@ -100,6 +100,10 @@ struct HomePage {
               }
               .padding({ left: 16, right: 16 })
             })
+            // 底部空白区域，避免最后一张卡片被底部按钮遮挡
+            ListItem() {
+              Column().width('100%').height(100)
+            }
           }
           .width('100%')
           .height('100%')

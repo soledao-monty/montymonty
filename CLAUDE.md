@@ -206,7 +206,23 @@ Column()
 
 `SafeAreaType.SYSTEM` 表示系统安全区域，`SafeAreaEdge.TOP` 和 `SafeAreaEdge.BOTTOM` 分别表示顶部和底部。
 
-### 7. Video 组件特殊注意
+### 7. 每个页面都需要做成沉浸式布局
+所有页面（HomePage、CreateMemoryPage、MemoryDetailPage、EditMemoryPage 等）都必须使用沉浸式布局，确保内容扩展到状态栏和导航栏区域。
+
+```typescript
+// ✅ 正确：在根容器上使用 expandSafeArea
+Column() {
+  // 页面内容
+}
+  .width('100%')
+  .height('100%')
+  .backgroundColor('#1a1a2e')
+  .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
+```
+
+**重要**：新增页面时也必须遵循此规范，不能使用固定的 padding 来处理安全区。
+
+### 8. Video 组件特殊注意
 `Video` 组件的构造函数只接受 `src` 属性，样式属性必须通过链式调用设置。
 
 ```typescript
