@@ -1,6 +1,7 @@
 import { MemoryCard } from '../model/MemoryCard';
 import { formatDate, formatRelativeTime } from '../utils/dateFormat';
 import { GlassmorphicCard } from './GlassmorphicCard';
+import { OrientedImage } from './OrientedImage';
 
 @Component
 export struct MemoryCardComponent {
@@ -11,11 +12,12 @@ export struct MemoryCardComponent {
     Column() {
       // 图片预览
       if (this.memory.mediaUris && this.memory.mediaUris.length > 0) {
-        Image(this.memory.mediaUris[0])
-          .width('100%')
-          .height(180)
-          .borderRadius(16)
-          .objectFit(ImageFit.Cover)
+        OrientedImage({
+          src: this.memory.mediaUris[0],
+          imgWidth: '100%',
+          imgHeight: 180,
+          radius: 16
+        })
           .margin({ bottom: 12 })
       }
 

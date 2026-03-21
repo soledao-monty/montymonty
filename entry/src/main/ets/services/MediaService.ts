@@ -1,4 +1,5 @@
 import photoAccessHelper from '@ohos.file.photoAccessHelper';
+import image from '@ohos.multimedia.image';
 import { common } from '@kit.AbilityKit';
 import { promptAction } from '@kit.ArkUI';
 
@@ -30,6 +31,58 @@ class MediaService {
         message: '选择照片失败'
       });
       return [];
+    }
+  }
+
+  /**
+   * 创建正确方向的PixelMap
+   */
+  async createOrientedPixelMap(uri: string): Promise<image.PixelMap | null> {
+    try {
+      // 检查是否是视频
+      const lowerUri = uri.toLowerCase();
+      const videoExtensions = ['.mp4', '.mov', '.avi', '.mkv', '.webm', '.3gp', '.m4v'];
+      if (videoExtensions.some(ext => lowerUri.endsWith(ext))) {
+        return null;
+      }
+
+      const imageSourceApi = image.createImageSource(uri);
+      if (!imageSourceApi) {
+        return null;
+      }
+
+      // 获取EXIF方向
+      const orientationProperty = await imageSourceApi.getImageProperty(image.PropertyKey.ORIENTATION);
+      const orientation = orientationProperty ? parseInt(orientationProperty) : 0;
+
+      // 创建PixelMap
+      const pixelMap = await imageSourceApi.createPixelMap();
+      if (!pixelMap) {
+        return null;
+      }
+
+      // 根据EXIF方向旋转
+      let rotationAngle = 0;
+      switch (orientation) {
+        case 3: // 旋转180度
+          rotationAngle = 180;
+          break;
+        case 6: // 顺时针旋转90度
+          rotationAngle = 90;
+          break;
+        case 8: // 逆时针旋转90度
+          rotationAngle = -90;
+          break;
+        default:
+          return pixelMap;
+      }
+
+      // 旋转PixelMap
+      await pixelMap.rotate(rotationAngle);
+      return pixelMap;
+    } catch (err) {
+      console.error('Failed to create oriented pixel map:', JSON.stringify(err));
+      return null;
     }
   }
 

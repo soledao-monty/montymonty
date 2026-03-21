@@ -1,11 +1,11 @@
 import { MediaItem } from '../model/MemoryCard';
+import { OrientedImage } from './OrientedImage';
 
 @Component
 export struct MediaGrid {
   @Prop mediaItems: string[] = [];
   @Prop columns: number = 3;
-  @Prop spacing: number = 4;
-  @Prop itemSize: number = 100;
+  @Prop spacing: number = 8;
   @Prop showAddButton: boolean = false;
   @Prop maxCount: number = 50;
   onAddClick?: () => void;
@@ -36,6 +36,7 @@ export struct MediaGrid {
           .justifyContent(FlexAlign.Center)
           .alignItems(HorizontalAlign.Center)
         }
+        .aspectRatio(1)
         .onClick((): void => {
           if (this.onAddClick) {
             this.onAddClick();
@@ -48,7 +49,6 @@ export struct MediaGrid {
         GridItem() {
           Stack() {
             if (this.isVideo(uri)) {
-              // 视频使用 Video 组件
               Video({
                 src: uri
               })
@@ -60,15 +60,12 @@ export struct MediaGrid {
                 .controls(false)
                 .muted(true)
             } else {
-              // 图片使用 Image 组件
-              Image(uri)
-                .width('100%')
-                .height('100%')
-                .borderRadius(8)
-                .objectFit(ImageFit.Cover)
+              OrientedImage({
+                src: uri,
+                radius: 8
+              })
             }
 
-            // 移除按钮
             if (this.onItemRemove) {
               Column() {
                 Text('×')
@@ -89,7 +86,6 @@ export struct MediaGrid {
               })
             }
 
-            // 视频标识
             if (this.isVideo(uri)) {
               Column() {
                 Text('▶')
@@ -107,7 +103,7 @@ export struct MediaGrid {
             }
           }
           .width('100%')
-          .height('100%')
+          .aspectRatio(1)
         }
         .onClick((): void => {
           if (this.onItemClick) {

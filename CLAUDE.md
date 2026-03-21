@@ -241,3 +241,18 @@ Video({
   .autoPlay(true)
   .controls(true)
 ```
+
+### 9. 不使用 ArkUI 保留字段作为组件属性名
+ArkUI 的内置属性（如 `width`、`height`、`borderRadius`、`id`、`tag`、`opacity` 等）**不能**作为自定义组件的 `@Prop` 或 `@State` 变量名，否则会与基类属性冲突导致编译错误。
+
+```typescript
+// ❌ 错误
+@Prop width: string = '100%';  // 与基类 Component 的 width 冲突
+@Prop height: number = 100;
+@Prop borderRadius: number = 0;
+
+// ✅ 正确
+@Prop imgWidth: string = '100%';
+@Prop imgHeight: number = 100;
+@Prop radius: number = 0;
+```

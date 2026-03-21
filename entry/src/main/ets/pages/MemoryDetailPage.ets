@@ -3,6 +3,7 @@ import { storageService } from '../services/StorageService';
 import { MemoryCard } from '../model/MemoryCard';
 import { formatDate } from '../utils/dateFormat';
 import { GlassmorphicCard, GlassmorphicCardDark } from '../components/GlassmorphicCard';
+import { OrientedImage } from '../components/OrientedImage';
 
 @Entry
 @Component
@@ -65,7 +66,8 @@ struct MemoryDetailPage {
           .height('100%')
           .objectFit(ImageFit.Cover)
           .blur(40)
-          .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
+          .expandSafeArea([SafeAreaType.SYSTEM
+          ], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
       }
 
       // 半透明遮罩 + 扩展安全区
@@ -166,11 +168,12 @@ struct MemoryDetailPage {
                       .autoPlay(true)
                       .controls(true)
                   } else {
-                    Image(this.memory.mediaUris[0])
-                      .width('100%')
-                      .height(300)
-                      .borderRadius(16)
-                      .objectFit(ImageFit.Cover)
+                    OrientedImage({
+                      src: this.memory.mediaUris[0],
+                      imgWidth: '100%',
+                      imgHeight: 300,
+                      radius: 16
+                    })
                   }
                 }
                 .width('100%')
@@ -198,15 +201,14 @@ struct MemoryDetailPage {
                             .autoPlay(false)
                             .controls(true)
                         } else {
-                          Image(uri)
-                            .width('100%')
-                            .height('100%')
-                            .borderRadius(8)
-                            .objectFit(ImageFit.Cover)
+                          OrientedImage({
+                            src: uri,
+                            radius: 8
+                          })
                         }
                       }
                       .width('100%')
-                      .height('100%')
+                      .aspectRatio(1)
                     }
                     .onClick((): void => {
                       if (!this.isVideo(uri)) {
@@ -219,7 +221,6 @@ struct MemoryDetailPage {
                 .columnsGap(8)
                 .rowsGap(8)
                 .width('100%')
-                .height(Math.ceil(this.memory.mediaUris.length / 2) * 180)
               }
 
               // 大图预览弹窗
@@ -237,10 +238,10 @@ struct MemoryDetailPage {
                   // 照片轮播（只显示图片，过滤视频）
                   Swiper() {
                     ForEach(this.memory.mediaUris.filter((uri: string) => !this.isVideo(uri)), (uri: string) => {
-                      Image(uri)
-                        .width('100%')
-                        .height('100%')
-                        .objectFit(ImageFit.Contain)
+                      OrientedImage({
+                        src: uri,
+                        objectFit: ImageFit.Contain
+                      })
                     })
                   }
                   .index(this.currentImageIndex)

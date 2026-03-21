@@ -304,7 +304,6 @@ struct EditMemoryPage {
                     },
                     onItemRemove: (index: number): void => this.removePhoto(index)
                   })
-                    .height(Math.ceil(this.mediaUris.length / 3) * 110)
                 } else {
                   Column() {
                     Text('+')
