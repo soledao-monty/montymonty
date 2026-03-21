@@ -5,14 +5,38 @@ import { formatDate } from '../utils/dateFormat';
 import { GlassmorphicCard, GlassmorphicCardDark } from '../components/GlassmorphicCard';
 import { OrientedImage } from '../components/OrientedImage';
 
+// 矩形区域类型
+interface RectBounds {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
 @Entry
 @Component
 struct MemoryDetailPage {
   @State memory: MemoryCard | null = null;
   @State isLoading: boolean = true;
   @State currentImageIndex: number = 0;
-  @State showImageViewer: boolean = false;
+  @State isFullscreen: boolean = false;
   @State isDeleting: boolean = false;
+  @State overlayOpacity: number = 0; // 遮罩透明度（动画）
+  @State showOverlay: boolean = false; // 控制遮罩层显示
+
+  // 动画相关状态
+  @State animImageX: number = 0;
+  @State animImageY: number = 0;
+  @State animImageWidth: number = 0;
+  @State animImageHeight: number = 0;
+  @State isAnimating: boolean = false;
+
+  // 布局常量
+  private readonly GRID_COLUMNS: number = 2;
+  private readonly GRID_SPACING: number = 8;
+  private readonly SCREEN_PADDING: number = 16;
+  private readonly HEADER_HEIGHT: number = 60; // 顶部导航栏高度
+  private readonly ITEM_MARGIN_TOP: number = 20; // 宫格距离顶部的间距
 
   // 判断是否是视频
   isVideo(uri: string): boolean {
@@ -21,10 +45,92 @@ struct MemoryDetailPage {
     return videoExtensions.some(ext => lowerUri.endsWith(ext));
   }
 
-  // 打开图片预览
-  openImageViewer(index: number): void {
+  // 获取图片URI列表（过滤视频）
+  getImageUris(): string[] {
+    if (!this.memory) return [];
+    return this.memory.mediaUris.filter((uri: string) => !this.isVideo(uri));
+  }
+
+  // 根据 index 计算缩略图的位置
+  getThumbnailBounds(index: number, screenWidth: number): RectBounds {
+    const gridWidth = screenWidth - this.SCREEN_PADDING * 2;
+    const itemWidth = (gridWidth - this.GRID_SPACING) / this.GRID_COLUMNS;
+    const row = Math.floor(index / this.GRID_COLUMNS);
+    const col = index % this.GRID_COLUMNS;
+
+    const x = this.SCREEN_PADDING + col * (itemWidth + this.GRID_SPACING);
+    const y = this.HEADER_HEIGHT + this.ITEM_MARGIN_TOP + row * (itemWidth + this.GRID_SPACING);
+
+    return { x: x, y: y, width: itemWidth, height: itemWidth };
+  }
+
+  // 打开全屏预览（带动画）
+  openFullscreen(index: number): void {
+    if (this.isAnimating) return;
+
     this.currentImageIndex = index;
-    this.showImageViewer = true;
+    this.isAnimating = true;
+
+    // 使用固定屏幕尺寸（360x780 是常见的逻辑像素尺寸）
+    const screenWidth = 360;
+    const screenHeight = 780;
+
+    // 获取点击图片的起始位置
+    const bounds = this.getThumbnailBounds(index, screenWidth);
+
+    // 设置起始位置
+    this.animImageX = bounds.x;
+    this.animImageY = bounds.y;
+    this.animImageWidth = bounds.width;
+    this.animImageHeight = bounds.height;
+
+    // 先显示遮罩（透明度为0）
+    this.showOverlay = true;
+    this.overlayOpacity = 0;
+    this.isFullscreen = true;
+
+    // 延迟一下让组件先渲染
+    setTimeout(() => {
+      // 遮罩渐变到全黑
+      animateTo({
+        duration: 200,
+        curve: Curve.EaseInOut
+      }, () => {
+        this.overlayOpacity = 1;
+      });
+
+      // 图片动画放大
+      animateTo({
+        duration: 300,
+        curve: Curve.EaseInOut
+      }, () => {
+        this.animImageX = 0;
+        this.animImageY = 0;
+        this.animImageWidth = screenWidth;
+        this.animImageHeight = screenHeight;
+      });
+    }, 50);
+
+    // 动画完成
+    setTimeout(() => {
+      this.isAnimating = false;
+    }, 350);
+  }
+
+  // 关闭全屏预览（直接返回）
+  closeFullscreen(): void {
+    // 直接关闭，不等待动画
+    this.isFullscreen = false;
+    this.showOverlay = false;
+    this.overlayOpacity = 0;
+
+    // 恢复图片位置
+    const screenWidth = 360;
+    const bounds = this.getThumbnailBounds(this.currentImageIndex, screenWidth);
+    this.animImageX = bounds.x;
+    this.animImageY = bounds.y;
+    this.animImageWidth = bounds.width;
+    this.animImageHeight = bounds.height;
   }
 
   async aboutToAppear() {
@@ -57,27 +163,35 @@ struct MemoryDetailPage {
     }
   }
 
+  // 拦截返回键/侧滑手势
+  onBackPress() {
+    if (this.isFullscreen) {
+      // 全屏状态下拦截返回，先关闭大图
+      this.closeFullscreen();
+      return true; // 拦截返回事件，不返回首页
+    }
+    return false; // 不拦截，让系统处理（返回首页）
+  }
+
   build() {
     Stack() {
-      // 背景：封面图片 + 厚重模糊 + 扩展安全区
+      // 背景
       if (this.memory && this.memory.mediaUris.length > 0) {
         Image(this.memory.mediaUris[0])
           .width('100%')
           .height('100%')
           .objectFit(ImageFit.Cover)
           .blur(40)
-          .expandSafeArea([SafeAreaType.SYSTEM
-          ], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
+          .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
+
+        Column()
+          .width('100%')
+          .height('100%')
+          .backgroundColor('rgba(26, 26, 46, 0.9)')
+          .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
       }
 
-      // 半透明遮罩 + 扩展安全区
-      Column()
-        .width('100%')
-        .height('100%')
-        .backgroundColor('rgba(26, 26, 46, 0.9)')
-        .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
-
-      // 内容层
+      // 页面内容（始终显示，不条件渲染）
       Column() {
         if (this.isLoading) {
           Column() {
@@ -99,16 +213,19 @@ struct MemoryDetailPage {
         } else {
           // 顶部导航
           Row() {
-            Text('<')
-              .fontSize(24)
+            Text(this.isFullscreen ? '×' : '<')
+              .fontSize(this.isFullscreen ? 28 : 24)
               .fontColor('#FFFFFF')
               .onClick((): void => {
-                router.back();
+                if (this.isFullscreen) {
+                  this.closeFullscreen();
+                } else {
+                  router.back();
+                }
               })
 
             Blank()
 
-            // 编辑按钮
             Text('编辑')
               .fontSize(16)
               .fontColor('rgba(255, 255, 255, 0.8)')
@@ -127,14 +244,12 @@ struct MemoryDetailPage {
               .fontColor('#FF6B6B')
               .onClick((): void => {
                 if (!this.isDeleting) {
-                  // 显示确认弹窗
                   AlertDialog.show({
                     title: '确认删除',
                     message: '确定要删除这条回忆吗？删除后无法恢复。',
                     primaryButton: {
                       value: '取消',
                       action: (): void => {
-                        // 取消删除
                       }
                     },
                     secondaryButton: {
@@ -154,7 +269,7 @@ struct MemoryDetailPage {
 
           Scroll() {
             Column({ space: 20 }) {
-              // 照片轮播/网格
+              // 照片宫格
               if (this.memory.mediaUris.length === 1) {
                 Stack() {
                   if (this.isVideo(this.memory.mediaUris[0])) {
@@ -181,11 +296,10 @@ struct MemoryDetailPage {
                 .borderRadius(16)
                 .onClick((): void => {
                   if (this.memory && !this.isVideo(this.memory.mediaUris[0])) {
-                    this.openImageViewer(0);
+                    this.openFullscreen(0);
                   }
                 })
               } else {
-                // 多张照片网格展示
                 Grid() {
                   ForEach(this.memory.mediaUris, (uri: string, index: number) => {
                     GridItem() {
@@ -212,7 +326,7 @@ struct MemoryDetailPage {
                     }
                     .onClick((): void => {
                       if (!this.isVideo(uri)) {
-                        this.openImageViewer(index);
+                        this.openFullscreen(index);
                       }
                     })
                   })
@@ -223,66 +337,6 @@ struct MemoryDetailPage {
                 .width('100%')
               }
 
-              // 大图预览弹窗
-              if (this.showImageViewer && this.memory) {
-                Stack() {
-                  // 背景
-                  Column() {}
-                    .width('100%')
-                    .height('100%')
-                    .backgroundColor('rgba(0, 0, 0, 0.9)')
-                    .onClick((): void => {
-                      this.showImageViewer = false;
-                    })
-
-                  // 照片轮播（只显示图片，过滤视频）
-                  Swiper() {
-                    ForEach(this.memory.mediaUris.filter((uri: string) => !this.isVideo(uri)), (uri: string) => {
-                      OrientedImage({
-                        src: uri,
-                        objectFit: ImageFit.Contain
-                      })
-                    })
-                  }
-                  .index(this.currentImageIndex)
-                  .width('100%')
-                  .height('100%')
-                  .autoPlay(false)
-                  .loop(false)
-                  .indicator(false)
-                  .onChange((index: number): void => {
-                    this.currentImageIndex = index;
-                  })
-
-                  // 关闭按钮
-                  Column() {
-                    Text('×')
-                      .fontSize(28)
-                      .fontColor('#FFFFFF')
-                  }
-                  .width(44)
-                  .height(44)
-                  .backgroundColor('rgba(255, 255, 255, 0.2)')
-                  .borderRadius(22)
-                  .justifyContent(FlexAlign.Center)
-                  .alignItems(HorizontalAlign.Center)
-                  .position({ top: 60, right: 16 })
-                  .onClick((): void => {
-                    this.showImageViewer = false;
-                  })
-
-                  // 页码指示
-                  Row({ space: 8 }) {
-                    Text(`${this.currentImageIndex + 1} / ${this.memory.mediaUris.length}`)
-                      .fontSize(16)
-                      .fontColor('#FFFFFF')
-                  }
-                  .position({ bottom: 60 })
-                }
-                .width('100%')
-                .height('100%')
-              }
-
               // 时间和地点
               GlassmorphicCardDark({
                 blurRadius: 15,
@@ -291,7 +345,6 @@ struct MemoryDetailPage {
                 cardPadding: 16
               }) {
                 Column({ space: 12 }) {
-                  // 时间
                   Row() {
                     Text('时间')
                       .fontSize(14)
@@ -303,7 +356,6 @@ struct MemoryDetailPage {
                   }
                   .width('100%')
 
-                  // 地点
                   if (this.memory.location) {
                     Divider()
                       .color('rgba(255, 255, 255, 0.1)')
@@ -320,7 +372,6 @@ struct MemoryDetailPage {
                     .width('100%')
                   }
 
-                  // 照片数量
                   Divider()
                     .color('rgba(255, 255, 255, 0.1)')
 
@@ -367,9 +418,99 @@ struct MemoryDetailPage {
           .scrollBar(BarState.Off)
         }
       }
+
+      // 遮罩层（全屏时覆盖宫格）- 全黑渐变
+      if (this.showOverlay) {
+        Column()
+          .width('100%')
+          .height('100%')
+          .backgroundColor('#000000')
+          .opacity(this.overlayOpacity)
+          .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
+      }
+
+      // 全屏预览层（Swiper 左右滑动）
+      if (this.isFullscreen) {
+        Stack() {
+          // Swiper 放在最底层（最先添加，层级最低）
+          Swiper() {
+            ForEach(this.getImageUris(), (uri: string) => {
+              OrientedImage({
+                src: uri,
+                objectFit: ImageFit.Contain
+              })
+                .width('100%')
+                .height('100%')
+            })
+          }
+          .index(this.currentImageIndex)
+          .indicator(false)
+          .loop(false)
+          .onChange((index: number) => {
+            this.currentImageIndex = index;
+            // 同步更新动画位置到当前图片
+            if (!this.isAnimating) {
+              const screenWidth = 360;
+              const screenHeight = 780;
+              this.animImageX = 0;
+              this.animImageY = 0;
+              this.animImageWidth = screenWidth;
+              this.animImageHeight = screenHeight;
+            }
+          })
+          .width('100%')
+          .height('100%')
+
+          // 顶部可点击区域（后添加，层级在上，捕获顶部点击）
+          Column()
+            .width('100%')
+            .height(120)
+            .position({ top: 0 })
+            .onClick((): void => {
+              this.closeFullscreen();
+            })
+
+          // 底部可点击区域（后添加，层级在上，捕获底部点击）
+          Column()
+            .width('100%')
+            .height(120)
+            .position({ bottom: 0 })
+            .onClick((): void => {
+              this.closeFullscreen();
+            })
+
+          // 关闭按钮（最后添加，层级最高）
+          Column() {
+            Text('×')
+              .fontSize(28)
+              .fontColor('#FFFFFF')
+          }
+          .width(44)
+          .height(44)
+          .backgroundColor('rgba(255, 255, 255, 0.2)')
+          .borderRadius(22)
+          .justifyContent(FlexAlign.Center)
+          .alignItems(HorizontalAlign.Center)
+          .position({ top: 58, right: 16 })
+          .onClick((): void => {
+            this.closeFullscreen();
+          })
+
+          // 页码指示
+          if (this.getImageUris().length > 1) {
+            Row({ space: 8 }) {
+              Text(`${this.currentImageIndex + 1} / ${this.getImageUris().length}`)
+                .fontSize(16)
+                .fontColor('#FFFFFF')
+            }
+            .position({ bottom: 60 })
+          }
+        }
+        .width('100%')
+        .height('100%')
+      }
     }
     .width('100%')
     .height('100%')
-    .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
   }
 }
